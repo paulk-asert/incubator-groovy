@@ -26,6 +26,7 @@ import groovy.lang.Range;
 
 import groovy.transform.stc.ClosureParams;
 import groovy.transform.stc.FromString;
+import groovy.transform.stc.PickFirstResolver;
 import groovy.transform.stc.SimpleType;
 import org.codehaus.groovy.runtime.callsite.BooleanClosureWrapper;
 import org.codehaus.groovy.runtime.typehandling.DefaultTypeTransformation;
@@ -550,12 +551,12 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      *         evaluates to true for each element dropped from the front of the CharSequence
      * @since 2.0.0
      */
-    public static CharSequence dropWhile(CharSequence self, @ClosureParams(value=SimpleType.class, options="char") Closure condition) {
+    public static CharSequence dropWhile(CharSequence self, @ClosureParams(value=FromString.class, conflictResolutionStrategy=PickFirstResolver.class, options={"String", "Character"}) Closure condition) {
         int num = 0;
         BooleanClosureWrapper bcw = new BooleanClosureWrapper(condition);
         while (num < self.length()) {
             char value = self.charAt(num);
-            if (bcw.call(value)) {
+            if (bcw.call(hasCharacterArg(condition) ? value : Character.toString(value))) {
                 num += 1;
             } else {
                 break;
@@ -575,7 +576,7 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      * @see #dropWhile(CharSequence, groovy.lang.Closure)
      * @since 2.3.7
      */
-    public static String dropWhile(GString self, @ClosureParams(value=SimpleType.class, options="char") Closure condition) {
+    public static String dropWhile(GString self, @ClosureParams(value=FromString.class, conflictResolutionStrategy=PickFirstResolver.class, options={"String", "Character"}) Closure condition) {
         return dropWhile(self.toString(), condition).toString();
     }
 
@@ -644,6 +645,9 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      * <p>
      * <pre class="groovyTestCase">
      * assert "Groovy".collectReplacements{ it == 'o' ? '_O_' : null } == 'Gr_O__O_vy'
+     * assert "Groovy".collectReplacements{ it.equalsIgnoreCase('O') ? '_O_' : null } == 'Gr_O__O_vy'
+     * assert "Groovy".collectReplacements{ char c -> c == 'o' ? '_O_' : null } == 'Gr_O__O_vy'
+     * assert "Groovy".collectReplacements{ Character c -> c == 'o' ? '_O_' : null } == 'Gr_O__O_vy'
      * assert "B&W".collectReplacements{ it == '&' ? '&amp;' : null } == 'B&amp;W'
      * </pre>
      *
@@ -652,13 +656,13 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      *         have been replaced with the corresponding replacements
      *         as determined by the {@code transform} Closure.
      */
-    public static String collectReplacements(String orig, @ClosureParams(value=SimpleType.class, options="char") Closure<String> transform) {
+    public static String collectReplacements(String orig, @ClosureParams(value=FromString.class, conflictResolutionStrategy=PickFirstResolver.class, options={"String", "Character"}) Closure<String> transform) {
         if (orig == null) return orig;
 
         StringBuilder sb = null; // lazy create for edge-case efficiency
         for (int i = 0, len = orig.length(); i < len; i++) {
             final char ch = orig.charAt(i);
-            final String replacement = transform.call(ch);
+            final String replacement = transform.call(hasCharacterArg(transform) ? ch : Character.toString(ch));
 
             if (replacement != null) {
                 // output differs from input; we write to our local buffer
@@ -674,6 +678,12 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
         }
 
         return sb == null ? orig : sb.toString();
+    }
+
+    private static boolean hasCharacterArg(Closure c) {
+        if (c.getMaximumNumberOfParameters() != 1) return false;
+        String typeName = c.getParameterTypes()[0].getName();
+        return typeName.equals("char") || typeName.equals("java.lang.Character");
     }
 
     /**
@@ -3180,12 +3190,12 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      *         element passed to the given closure evaluates to true
      * @since 2.0.0
      */
-    public static CharSequence takeWhile(CharSequence self, @ClosureParams(value=SimpleType.class, options="char") Closure condition) {
+    public static CharSequence takeWhile(CharSequence self, @ClosureParams(value=FromString.class, conflictResolutionStrategy=PickFirstResolver.class, options={"String", "Character"}) Closure condition) {
         int num = 0;
         BooleanClosureWrapper bcw = new BooleanClosureWrapper(condition);
         while (num < self.length()) {
             char value = self.charAt(num);
-            if (bcw.call(value)) {
+            if (bcw.call(hasCharacterArg(condition) ? value : Character.toString(value))) {
                 num += 1;
             } else {
                 break;
@@ -3203,7 +3213,7 @@ public class StringGroovyMethods extends DefaultGroovyMethodsSupport {
      *         element passed to the given closure evaluates to true
      * @since 2.3.7
      */
-    public static String takeWhile(GString self, @ClosureParams(value=SimpleType.class, options="char") Closure condition) {
+    public static String takeWhile(GString self, @ClosureParams(value=FromString.class, conflictResolutionStrategy=PickFirstResolver.class, options={"String", "Character"}) Closure condition) {
         return (String) takeWhile(self.toString(), condition);
     }
 
