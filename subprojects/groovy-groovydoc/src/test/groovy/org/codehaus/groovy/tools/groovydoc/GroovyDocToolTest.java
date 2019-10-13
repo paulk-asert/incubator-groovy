@@ -246,6 +246,7 @@ public class GroovyDocToolTest extends GroovyTestCase {
         xmlToolForTests.renderToOutput(output, MOCK_DIR);
 
         String groovyClassDoc = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/testfiles/GroovyClassWithMultipleInterfaces.html");
+        assertNotNull("Class not found in: " + output, groovyClassDoc);
         assertTrue(groovyClassDoc.indexOf("<interface>JavaInterface1</interface>") > 0);
         assertTrue(groovyClassDoc.indexOf("<interface>GroovyInterface1</interface>") > 0);
         assertTrue(groovyClassDoc.indexOf("<interface>Runnable</interface>") > 0);
@@ -267,8 +268,8 @@ public class GroovyDocToolTest extends GroovyTestCase {
         xmlToolForTests.renderToOutput(output, MOCK_DIR);
 
         String groovyClassDoc = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/testfiles/GroovyClassWithMultipleInterfaces.html");
-        assertTrue(groovyClassDoc.indexOf("<interface>GroovyInterface1</interface>") > 0);
-        assertTrue(groovyClassDoc.indexOf("<interface>Runnable</interface>") > 0);
+        assertTrue(groovyClassDoc, groovyClassDoc.indexOf("<interface>GroovyInterface1</interface>") > 0);
+        assertTrue(groovyClassDoc, groovyClassDoc.indexOf("<interface>Runnable</interface>") > 0);
 
         String javaClassDoc = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/testfiles/JavaClassWithMultipleInterfaces.html");
         assertTrue(javaClassDoc.indexOf("<interface>JavaInterface1</interface>") > 0);
@@ -436,9 +437,9 @@ public class GroovyDocToolTest extends GroovyTestCase {
         MockOutputTool output = new MockOutputTool();
         htmlTool.renderToOutput(output, MOCK_DIR);
         String javaExampleClass = output.getText(MOCK_DIR + "/" + base + "J.html");
-        assertMethodVisibility(base, output, javaExampleClass, a, b, c, d);
+        assertMethodVisibility(base + "J", output, javaExampleClass, a, b, c, d);
         String groovyExampleClass = output.getText(MOCK_DIR + "/" + base + "G.html");
-        assertMethodVisibility(base, output, groovyExampleClass, a, b, c, d);
+        assertMethodVisibility(base + "G", output, groovyExampleClass, a, b, c, d);
     }
 
     private void assertMethodVisibility(String base, MockOutputTool output, String text, boolean a, boolean b, boolean c, boolean d) {
@@ -468,10 +469,9 @@ public class GroovyDocToolTest extends GroovyTestCase {
         xmlTool.add(srcList);
         MockOutputTool output = new MockOutputTool();
         xmlTool.renderToOutput(output, MOCK_DIR);
-        String sqlDoc = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/testfiles/MultipleConstructorErrorBug.html");
-        System.out.println(sqlDoc);
+        String text = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/testfiles/MultipleConstructorErrorBug.html");
         // VARBINARY() and other methods were assumed to be Constructors, make sure they aren't anymore...
-        assertTrue(sqlDoc.indexOf("<method modifiers=\"public static \" returns=\"java.lang.String\" name=\"VARBINARY\">") > 0);
+        assertTrue(text,text.indexOf("<method modifiers=\"public static \" returns=\"java.lang.String\" name=\"VARBINARY\">") > 0);
     }
 
     public void testReturnTypeResolution() throws Exception {
@@ -482,7 +482,7 @@ public class GroovyDocToolTest extends GroovyTestCase {
         MockOutputTool output = new MockOutputTool();
         xmlTool.renderToOutput(output, MOCK_DIR);
         String text = output.getText(MOCK_DIR + "/org/codehaus/groovy/tools/groovydoc/SimpleGroovyRootDoc.html");
-        assertTrue(text.indexOf("org.codehaus.groovy.groovydoc.GroovyClassDoc") > 0);
+        assertTrue(text, text.indexOf("org.codehaus.groovy.groovydoc.GroovyClassDoc") > 0);
     }
 
     public void testParameterTypeResolution() throws Exception {
@@ -669,7 +669,7 @@ public class GroovyDocToolTest extends GroovyTestCase {
         Pattern p = Pattern.compile("<a(.+?)java/util/ArrayList.html' title='ArrayList'>(.+?)</a>");
         Matcher m = p.matcher(derivDoc);
 
-        assertTrue(m.find());
+        assertTrue(derivDoc, m.find());
         assertEquals("There has to be a reference to class ArrayList", "ArrayList", m.group(2));
     }
 

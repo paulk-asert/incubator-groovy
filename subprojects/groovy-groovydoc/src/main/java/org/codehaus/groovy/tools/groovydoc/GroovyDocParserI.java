@@ -16,22 +16,15 @@
  *  specific language governing permissions and limitations
  *  under the License.
  */
-dependencies {
-    compile rootProject
-    compile "com.github.javaparser:javaparser-core:$javaParserVersion"
-    testCompile rootProject.sourceSets.test.runtimeClasspath
-    compile project(':groovy-templates')
-    runtime project(':groovy-docgenerator')
-    testCompile project(':groovy-test')
-    testCompile "org.apache.ant:ant-testutil:$antVersion"
-}
+package org.codehaus.groovy.tools.groovydoc;
 
-compileJava {
-    doLast {
-        mkdir "$sourceSets.main.java.outputDir/META-INF"
-    }
-}
+import org.codehaus.groovy.groovydoc.GroovyClassDoc;
+import org.codehaus.groovy.groovydoc.GroovyRootDoc;
 
-eclipse.classpath.file.whenMerged {
-    entries.removeAll { entry -> entry.path == '/groovy-xml' }
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+public interface GroovyDocParserI {
+    Map<String, GroovyClassDoc> getClassDocsFromSingleSource(String packagePath, String file, String src);
 }
