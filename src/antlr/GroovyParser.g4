@@ -118,7 +118,7 @@ packageDeclaration
     ;
 
 importDeclaration
-    :   annotationsOpt IMPORT STATIC? qualifiedName (DOT MUL | AS alias=identifier)?
+    :   annotationsOpt IMPORT STATIC? qualifiedName (DOT MUL | AS alias=identifier[true])?
     ;
 
 
@@ -226,7 +226,7 @@ locals[ int t ]
         |   TRAIT { $t = 4; }
         |   RECORD { $t = 5; }
         )
-        identifier
+        identifier[true]
         (nls typeParameters)?
         (nls formalParameters)?
         (nls EXTENDS nls scs=typeList)?
@@ -252,7 +252,7 @@ enumConstants
     ;
 
 enumConstant
-    :   annotationsOpt identifier arguments? anonymousInnerClassDeclaration[1]?
+    :   annotationsOpt identifier[true] arguments? anonymousInnerClassDeclaration[1]?
     ;
 
 classBodyDeclaration[int t]
@@ -290,7 +290,7 @@ compactConstructorDeclaration
     ;
 
 methodName
-    :   identifier
+    :   identifier[true]
     |   stringLiteral
     ;
 
@@ -313,7 +313,7 @@ variableDeclarator
     ;
 
 variableDeclaratorId
-    :   identifier
+    :   identifier[true]
     ;
 
 variableInitializer
@@ -424,11 +424,8 @@ qualifiedName
  *  for them in package names for better integration with existing Java packages
  */
 qualifiedNameElement
-    :   identifier
+    :   identifier[true]
     |   DEF
-    |   IN
-    |   AS
-    |   TRAIT
     ;
 
 qualifiedNameElements
@@ -436,7 +433,7 @@ qualifiedNameElements
     ;
 
 qualifiedClassName
-    :   qualifiedNameElements identifier
+    :   qualifiedNameElements identifier[true]
     ;
 
 qualifiedStandardClassName
@@ -463,7 +460,7 @@ gstringValue
     ;
 
 gstringPath
-    :   identifier GStringPathPart*
+    :   identifier[true] GStringPathPart*
     ;
 
 
@@ -542,7 +539,7 @@ elementValuePair
     ;
 
 elementValuePairName
-    :   identifier
+    :   identifier[true]
     |   keywords
     ;
 
@@ -618,12 +615,12 @@ loopStatement
 
 continueStatement
     :   CONTINUE
-        identifier?
+        identifier[true]?
     ;
 
 breakStatement
     :   BREAK
-        identifier?
+        identifier[true]?
     ;
 
 yieldStatement
@@ -653,7 +650,7 @@ statement
     |   continueStatement                                                                                   #continueStmtAlt
     |   { inSwitchExpressionLevel > 0 }?
         yieldStatement                                                                                      #yieldStmtAlt
-    |   identifier COLON nls statement                                                                      #labeledStmtAlt
+    |   identifier[true] COLON nls statement                                                                      #labeledStmtAlt
     |   assertStatement                                                                                     #assertStmtAlt
     |   localVariableDeclaration                                                                            #localVariableDeclarationStmtAlt
     |   statementExpression                                                                                 #expressionStmtAlt
@@ -661,7 +658,7 @@ statement
     ;
 
 catchClause
-    :   CATCH LPAREN variableModifiersOpt catchType? identifier rparen nls block
+    :   CATCH LPAREN variableModifiersOpt catchType? identifier[true] rparen nls block
     ;
 
 catchType
@@ -752,8 +749,8 @@ statementExpression
     :   commandExpression                   #commandExprAlt
     ;
 
-postfixExpression
-    :   pathExpression op=(INC | DEC)?
+postfixExpression[boolean includeAsIn]
+    :   pathExpression[$includeAsIn] op=(INC | DEC)?
     ;
 
 switchExpression
@@ -781,7 +778,7 @@ expression
     :   castParExpression castOperandExpression                                             #castExprAlt
 
     // qualified names, array expressions, method invocation, post inc/dec
-    |   postfixExpression                                                                   #postfixExprAlt
+    |   postfixExpression[true]                                                             #postfixExprAlt
 
     |   switchExpression                                                                    #switchExprAlt
 
@@ -884,7 +881,7 @@ castOperandExpression
 options { baseContext = expression; }
     :   castParExpression castOperandExpression                                             #castExprAlt
 
-    |   postfixExpression                                                                   #postfixExprAlt
+    |   postfixExpression[false]                                                            #postfixExprAlt
 
     // ~(BNOT)/!(LNOT)
     |   (BITNOT | NOT) nls castOperandExpression                                            #unaryNotExprAlt
@@ -938,9 +935,9 @@ commandArgument
  *  t   0: primary, 1: namePart, 2: arguments, 3: closureOrLambdaExpression, 4: indexPropertyArgs, 5: namedPropertyArgs,
  *      6: non-static inner class creator
  */
-pathExpression returns [int t]
+pathExpression[boolean includeAsIn] returns [int t]
     :   (
-            primary
+            primary[$includeAsIn]
         |
             // if 'static' followed by DOT, we can treat them as identifiers, e.g. static.unused = { -> }
             { _input.LT(2).getType() == DOT }?
@@ -992,7 +989,7 @@ pathElement returns [int t]
  */
 namePart
     :
-        (   identifier
+        (   identifier[true]
 
         // foo.'bar' is in all ways same as foo.bar, except that bar can have an arbitrary spelling
         |   stringLiteral
@@ -1033,11 +1030,11 @@ namedPropertyArgs
     :   (SAFE_INDEX | LBRACK) (namedPropertyArgList | COLON) RBRACK
     ;
 
-primary
+primary[boolean includeAsIn]
     :
         // Append `typeArguments?` to `identifier` to support constructor reference with generics, e.g. HashMap<String, Integer>::new
         // Though this is not a graceful solution, it is much faster than replacing `builtInType` with `type`
-        identifier typeArguments?                                                           #identifierPrmrAlt
+        identifier[$includeAsIn] typeArguments?                                             #identifierPrmrAlt
     |   literal                                                                             #literalPrmrAlt
     |   gstring                                                                             #gstringPrmrAlt
     |   NEW nls creator[0]                                                                  #newPrmrAlt
@@ -1052,7 +1049,7 @@ primary
 
 namedPropertyArgPrimary
 options { baseContext = primary; }
-    :   identifier                                                                          #identifierPrmrAlt
+    :   identifier[true]                                                                    #identifierPrmrAlt
     |   literal                                                                             #literalPrmrAlt
     |   gstring                                                                             #gstringPrmrAlt
     |   parExpression                                                                       #parenPrmrAlt
@@ -1062,14 +1059,14 @@ options { baseContext = primary; }
 
 namedArgPrimary
 options { baseContext = primary; }
-    :   identifier                                                                          #identifierPrmrAlt
+    :   identifier[true]                                                                    #identifierPrmrAlt
     |   literal                                                                             #literalPrmrAlt
     |   gstring                                                                             #gstringPrmrAlt
     ;
 
 commandPrimary
 options { baseContext = primary; }
-    :   identifier                                                                          #identifierPrmrAlt
+    :   identifier[true]                                                                    #identifierPrmrAlt
     |   literal                                                                             #literalPrmrAlt
     |   gstring                                                                             #gstringPrmrAlt
     ;
@@ -1114,7 +1111,7 @@ options { baseContext = mapEntry; }
 
 mapEntryLabel
     :   keywords
-    |   primary
+    |   primary[true]
     ;
 
 namedPropertyArgLabel
@@ -1215,17 +1212,19 @@ className
     :   CapitalizedIdentifier
     ;
 
-identifier
+identifier[boolean includeAsIn]
     :   Identifier
     |   CapitalizedIdentifier
-    |   AS
-    |   IN
     |   PERMITS
     |   RECORD
     |   SEALED
     |   TRAIT
     |   VAR
     |   YIELD
+    |   { $ctx.includeAsIn }?
+        AS
+    |   { $ctx.includeAsIn }?
+        IN
     ;
 
 builtInType
