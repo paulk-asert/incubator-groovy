@@ -29,18 +29,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.apache.groovy.parser.antlr4.GroovyParser.AS;
 import static org.apache.groovy.parser.antlr4.GroovyParser.ASSIGN;
 import static org.apache.groovy.parser.antlr4.GroovyParser.BuiltInPrimitiveType;
 import static org.apache.groovy.parser.antlr4.GroovyParser.CapitalizedIdentifier;
 import static org.apache.groovy.parser.antlr4.GroovyParser.DOT;
 import static org.apache.groovy.parser.antlr4.GroovyParser.ExpressionContext;
 import static org.apache.groovy.parser.antlr4.GroovyParser.Identifier;
+import static org.apache.groovy.parser.antlr4.GroovyParser.IN;
 import static org.apache.groovy.parser.antlr4.GroovyParser.LBRACK;
 import static org.apache.groovy.parser.antlr4.GroovyParser.LPAREN;
 import static org.apache.groovy.parser.antlr4.GroovyParser.LT;
 import static org.apache.groovy.parser.antlr4.GroovyParser.PathExpressionContext;
 import static org.apache.groovy.parser.antlr4.GroovyParser.PostfixExprAltContext;
 import static org.apache.groovy.parser.antlr4.GroovyParser.PostfixExpressionContext;
+import static org.apache.groovy.parser.antlr4.GroovyParser.RPAREN;
 import static org.apache.groovy.parser.antlr4.GroovyParser.StringLiteral;
 import static org.apache.groovy.parser.antlr4.GroovyParser.YIELD;
 import static org.apache.groovy.parser.antlr4.util.StringUtils.matches;
@@ -134,6 +137,19 @@ public class SemanticPredicates {
         }
 
         return false;
+    }
+
+    public static boolean isCastFollowedByInOrAs(TokenStream ts) {
+        if (ts.LT(1).getType() != LPAREN) return false;
+        int k = 2;
+        int type;
+        do {
+            type = ts.LT(k++).getType();
+            if (type != DOT && type != Identifier && type != RPAREN
+                && type != CapitalizedIdentifier) return false;
+        } while (type != RPAREN);
+        type = ts.LT(k).getType();
+        return type == AS || type == IN;
     }
 
     /**

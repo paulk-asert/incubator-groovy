@@ -426,9 +426,6 @@ qualifiedName
 qualifiedNameElement
     :   identifier
     |   DEF
-    |   IN
-    |   AS
-    |   TRAIT
     ;
 
 qualifiedNameElements
@@ -778,7 +775,7 @@ switchExpressionLabel
 
 expression
     // must come before postfixExpression to resolve the ambiguities between casting and call on parentheses expression, e.g. (int)(1 / 2)
-    :   castParExpression castOperandExpression                                             #castExprAlt
+    :   castExpression                                                                      #castExprAlt
 
     // qualified names, array expressions, method invocation, post inc/dec
     |   postfixExpression                                                                   #postfixExprAlt
@@ -880,9 +877,14 @@ expression
                      right=enhancedStatementExpression                                      #assignmentExprAlt
     ;
 
+castExpression
+    :   { !SemanticPredicates.isCastFollowedByInOrAs(_input) }?
+        (castParExpression castOperandExpression)
+    ;
+
 castOperandExpression
 options { baseContext = expression; }
-    :   castParExpression castOperandExpression                                             #castExprAlt
+    :   castExpression                                                                      #castExprAlt
 
     |   postfixExpression                                                                   #postfixExprAlt
 

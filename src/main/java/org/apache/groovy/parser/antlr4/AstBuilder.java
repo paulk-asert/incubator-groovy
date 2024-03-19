@@ -2937,11 +2937,11 @@ public class AstBuilder extends GroovyParserBaseVisitor<Object> {
 
     @Override
     public CastExpression visitCastExprAlt(final CastExprAltContext ctx) {
-        Expression expr = (Expression) this.visit(ctx.expression());
+        Expression expr = (Expression) this.visit(ctx.castExpression().expression());
         if (expr instanceof VariableExpression && ((VariableExpression) expr).isSuperExpression()) {
             this.createParsingFailedException("Cannot cast or coerce `super`", ctx); // GROOVY-9391
         }
-        CastExpression cast = new CastExpression(this.visitCastParExpression(ctx.castParExpression()), expr);
+        CastExpression cast = new CastExpression(this.visitCastParExpression(ctx.castExpression().castParExpression()), expr);
         return configureAST(cast, ctx);
     }
 
