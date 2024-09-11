@@ -41,7 +41,8 @@ class PerformanceTestSummary extends DefaultTask {
                 def (version, mean, stdDev) = [split[0], split[1], split[2]]
                 mean = Double.valueOf(mean)
                 stdDev = Double.valueOf(stdDev)
-                def id = version == project.version ? 'current' : version
+                def id = dataFile.name - 'compilation-stats-' //== project.version ? 'current' : version
+                id = id - '.csv'
                 versions << [id, mean, stdDev]
             }
         }

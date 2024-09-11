@@ -21,7 +21,7 @@ plugins {
 }
 
 performanceTests {
-    versions 'current', '3.0.22', '4.0.22'
+    versions '4.0.22', '5.0.0-alpha-9', 'current_md5', 'current_sha256', 'current_murmur3_128B', 'current_murmur3_128A', 'current_xx128'  // '3.0.22', '4.0.19', '4.0.20', '4.0.21', '4.0.22'
 
     testFiles project.files("src/files") +
             project.files('src/jmh/groovy/org/apache/groovy/bench/Ackermann.groovy') +

@@ -72,6 +72,7 @@ class PerformanceTestsExtension {
     }
 
     void version(String v) {
+        def hashAlg = v.startsWith('current_') ? v - 'current_' : null
         def version = v.replace('.', '_')
         def groovyConf = configurations.create("perfGroovy$version") { Configuration conf ->
             conf.canBeResolved = true
@@ -114,6 +115,9 @@ class PerformanceTestsExtension {
             je.mainClass.set('org.apache.groovy.perf.CompilerPerformanceTest')
             je.classpath(groovyConf, sourceSets.getByName('test').output)
             je.jvmArgs = ['-Xms512m', '-Xmx512m']
+            if (hashAlg) {
+                je.systemProperty('groovy.cache.hashing.algorithm', hashAlg)
+            }
             je.outputs.file(outputFile)
             je.doFirst {
                 def args = [outputFile.get().toString(), "-cp", groovyConf.asPath]

@@ -22,6 +22,7 @@ import groovy.lang.GroovyClassLoader;
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.CompilePhase;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,12 +57,18 @@ public class ScriptCompilationExecuter {
     public long execute() throws Exception {
         ClassLoader cl = new URLClassLoader(classpath, ClassLoader.getSystemClassLoader().getParent());
         GroovyClassLoader gcl = new GroovyClassLoader(cl);
-        CompilationUnit cu = new CompilationUnit(new CompilerConfiguration(), null, gcl, new GroovyClassLoader(this.getClass().getClassLoader()));
-        for (File source : sources) {
-            cu.addSource(source);
-        }
+//        CompilationUnit cu = new CompilationUnit(new CompilerConfiguration(), null, gcl, new GroovyClassLoader(this.getClass().getClassLoader()));
         long sd = System.nanoTime();
-        cu.compile(CompilePhase.CLASS_GENERATION.getPhaseNumber());
+        for (File source : sources) {
+//            cu.addSource(source);
+            try {
+                gcl.parseClass(source);
+            } catch(Exception ignore) {
+                System.out.println("ignore = " + ignore.getMessage());
+            }
+        }
+//        long sd = System.nanoTime();
+//        cu.compile(CompilePhase.CLASS_GENERATION.getPhaseNumber());
         long dur = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - sd);
         return dur;
     }

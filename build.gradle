@@ -94,6 +94,9 @@ dependencies {
     implementation "org.ow2.asm:asm-util:${versions.asm}"
     implementation "me.champeau.openbeans:openbeans:${versions.openbeans}"
     implementation "me.sunlan:antlr4-runtime:${versions.antlr4}"
+    implementation 'net.openhft:zero-allocation-hashing:0.16'
+    implementation 'commons-codec:commons-codec:1.17.1'
+
 
     antlr "me.sunlan:antlr4:${versions.antlr4}"
 

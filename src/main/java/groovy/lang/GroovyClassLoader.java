@@ -18,6 +18,8 @@
  */
 package groovy.lang;
 
+import net.openhft.hashing.LongTupleHashFunction;
+import org.apache.commons.codec.digest.MurmurHash3;
 import org.codehaus.groovy.ast.ClassHelper;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.FieldNode;
@@ -57,6 +59,7 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.CodeSource;
+import java.security.NoSuchAlgorithmException;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
@@ -84,6 +87,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GroovyClassLoader extends URLClassLoader {
     private static final URL[] EMPTY_URL_ARRAY = new URL[0];
+    private static final String HASH_ALGORITHM = System.getProperty("groovy.cache.hashing.algorithm", "md5");
 
     private static final AtomicInteger scriptNameCounter = new AtomicInteger(1_000_000); // 1,000,000 avoids conflicts with names from the GroovyShell
 
@@ -261,11 +265,7 @@ public class GroovyClassLoader extends URLClassLoader {
      * @return the main class defined in the given script
      */
     public Class parseClass(final String text) throws CompilationFailedException {
-        try {
-            return parseClass(text, "Script_" + EncodingGroovyMethods.md5(text) + ".groovy");
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new GroovyRuntimeException(e);
-        }
+        return parseClass(text, "Script_" + hash(text) + ".groovy");
     }
 
     public Class parseClass(final Reader reader, final String fileName) throws CompilationFailedException {
@@ -325,9 +325,29 @@ public class GroovyClassLoader extends URLClassLoader {
             strToDigest.append("name:").append(codeSource.getName());
         }
 
+        return hash(strToDigest);
+    }
+
+    private static String hash(CharSequence strToDigest) {
         try {
-            return EncodingGroovyMethods.md5(strToDigest);
-        } catch (java.security.NoSuchAlgorithmException e) {
+            switch(HASH_ALGORITHM) {
+                case "md5":
+                    return EncodingGroovyMethods.md5(strToDigest);
+                case "sha256":
+                    return EncodingGroovyMethods.sha256(strToDigest);
+                case "murmur3_128A":
+                    long[] longs = MurmurHash3.hash128x64(strToDigest.toString().getBytes(StandardCharsets.UTF_8));
+                    return Long.toHexString(longs[1]) + Long.toHexString(longs[0]);
+                case "murmur3_128B":
+                    long[] longs1 = LongTupleHashFunction.murmur_3().hashChars(strToDigest);
+                    return Long.toHexString(longs1[1]) + Long.toHexString(longs1[0]);
+                case "xx128":
+                    long[] longs2 = LongTupleHashFunction.xx128().hashChars(strToDigest);
+                    return Long.toHexString(longs2[1]) + Long.toHexString(longs2[0]);
+                default:
+                    throw new IllegalStateException("Unknown hash algorithm");
+            }
+        } catch (NoSuchAlgorithmException e) {
             throw new GroovyRuntimeException(e);
         }
     }
